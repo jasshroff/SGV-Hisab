@@ -1,0 +1,106 @@
+{
+  "theme": "light",
+  "archetype": "1 (Organic & Earthy) with Luxury (5) accents",
+  "mood": "Trustworthy, Professional, Traditional Indian Bookkeeping (Bahi-Khata) meets Modern Fintech",
+  "typography": {
+    "fonts": [
+      {
+        "use": "headings",
+        "family": "Cabinet Grotesk",
+        "weight": "font-bold to font-black",
+        "url": "https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap"
+      },
+      {
+        "use": "body_and_tables",
+        "family": "IBM Plex Sans",
+        "weight": "font-normal, font-medium for headers",
+        "url": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      }
+    ],
+    "rules": {
+      "h1": "text-4xl sm:text-5xl tracking-tight font-black text-brand-charcoal",
+      "h2": "text-2xl sm:text-3xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl tracking-tight font-bold",
+      "body": "text-sm sm:text-base text-brand-gray leading-relaxed",
+      "table_data": "text-sm font-medium tabular-nums tracking-tight",
+      "hindi_labels": "text-xs text-muted-foreground ml-1 font-normal"
+    }
+  },
+  "colors": {
+    "background": {
+      "base": "#FAFAF7",
+      "surface": "#FFFFFF",
+      "card": "#FFFFFF",
+      "glass": "rgba(255, 255, 255, 0.8)"
+    },
+    "text": {
+      "primary": "#1A1C19",
+      "secondary": "#5C5F5A",
+      "muted": "#8A8D86"
+    },
+    "brand": {
+      "primary": "#C89E47",
+      "primary_hover": "#B38C3B",
+      "gold_accent": "#D4AF37"
+    },
+    "status": {
+      "jama_credit": "#2D5A27",
+      "jama_light": "#EAF4E8",
+      "naame_debit": "#8E2E2E",
+      "naame_light": "#F9EAEA"
+    },
+    "border": {
+      "default": "#E4E5E1",
+      "focus": "#C89E47"
+    }
+  },
+  "spacing_and_layout": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "table_density": "Dense. Use py-2 px-3 for table cells. Maintain tabular-nums for numeric columns.",
+    "bento_dashboard": "grid-cols-1 md:grid-cols-3 gap-6. Use 'Control Room' logic for dense metric summaries.",
+    "borders": "Use subtle 1px borders (border-border) with max 4px radius (rounded-sm) to retain the professional, ledger-like aesthetic.",
+    "shadows": "Minimalist. shadow-sm for cards, shadow-md for dropdowns/modals."
+  },
+  "components": {
+    "forms": "Use Shadcn Input, Select, and Datepicker. Ensure inputs have focus:ring-1 focus:ring-brand-primary. Include Hindi/Devanagari labels next to English (e.g., 'Gold (सोना)').",
+    "tables": "Use Shadcn Table. Enable sticky headers if possible. Highlight Jama rows/amounts with green text/bg-tints and Naame with red text/bg-tints. Align numeric amounts to the right.",
+    "buttons": "Primary buttons use the gold brand color (bg-[#C89E47] text-white). Hover state darkens. Add a subtle inner shadow.",
+    "tabs": "Use Shadcn Tabs for toggling between 'Today\\'s Hisab' and 'Party Ledger'. Use border-b styles instead of pill shapes for a more traditional look.",
+    "toast": "Use Sonner for success/error alerts upon entry creation."
+  },
+  "motion": {
+    "hover": "transition-colors duration-200 ease-in-out",
+    "modals": "Fade and scale in (duration 150ms).",
+    "tables": "Staggered fade in for row entries."
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "style": "Duotone for dashboard widgets, Regular/Bold for dense table headers and actions."
+  },
+  "media": {
+    "images": {
+      "login_background": {
+        "url": "https://images.unsplash.com/photo-1753785945213-d562c9c953ae?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMEluZGlhbiUyMHBhdHRlcm58ZW58MHx8fHwxNzgxMTc1OTUyfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Traditional Indian pattern. Use this as a split-screen background or low-opacity watermark on the login page to establish the cultural context of the jewellery business."
+      },
+      "gold_texture_accent": {
+        "url": "https://images.pexels.com/photos/2248589/pexels-photo-2248589.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Crumpled gold fabric texture. Can be used selectively as a textured header background or as a premium card background with a heavy white overlay (bg-white/90)."
+      }
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure white text on the gold primary button passes APCA/WCAG. If not, use very dark gray (#1A1C19) text on the gold button.",
+    "testing_attributes": "All inputs, buttons, and table rows MUST have data-testid attributes (e.g., data-testid='submit-entry-button', data-testid='party-select')."
+  },
+  "instructions_to_main_agent": [
+    "Build a dual-user B2B bookkeeping app for 'Shree Gopaldas Vallabhdas Jewellers'.",
+    "Implement English + Hindi labels inline for familiarity (e.g. 'Party (पार्टी)').",
+    "Use Phosphor Icons for UI actions.",
+    "The UI should feel like a modern digital 'Bahi Khata' (Ledger). Use bone-white backgrounds, sharp or slightly rounded corners (rounded-sm), and strict grids.",
+    "Use Cabinet Grotesk for Headings and IBM Plex Sans for body text and tables (tabular-nums is strictly required for financial figures).",
+    "Differentiate Jama (Credit/In) and Naame (Debit/Out) clearly via color-coding: deep green for Jama, deep maroon for Naame.",
+    "Create an entry form that captures Date, Party Name, Item Name, Type, Gold, Fine Gold, Silver, Touch%, Amount, and Remarks.",
+    "Implement dense Shadcn tables for the ledger view with filters and export functionality."
+  ]
+}
