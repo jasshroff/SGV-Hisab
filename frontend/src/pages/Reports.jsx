@@ -102,6 +102,8 @@ export default function Reports() {
                       <th className="text-right">Naame Gold</th>
                       <th className="text-right">Jama Fine</th>
                       <th className="text-right">Naame Fine</th>
+                      <th className="text-right">Jama Silver</th>
+                      <th className="text-right">Naame Silver</th>
                       <th className="text-right">Jama Amount</th>
                       <th className="text-right">Naame Amount</th>
                       <th className="text-right">Entries</th>
@@ -115,11 +117,13 @@ export default function Reports() {
                         <td className="text-right text-[var(--naame)]">{fmt(u.totals.naame.gold)}</td>
                         <td className="text-right text-[var(--jama)]">{fmt(u.totals.jama.fine_gold)}</td>
                         <td className="text-right text-[var(--naame)]">{fmt(u.totals.naame.fine_gold)}</td>
+                        <td className="text-right text-[var(--jama)]">{fmt(u.totals.jama.silver)}</td>
+                        <td className="text-right text-[var(--naame)]">{fmt(u.totals.naame.silver)}</td>
                         <td className="text-right text-[var(--jama)]">{fmtINR(u.totals.jama.amount)}</td>
                         <td className="text-right text-[var(--naame)]">{fmtINR(u.totals.naame.amount)}</td>
                         <td className="text-right">{u.entries.length}</td>
                       </tr>
-                    )) : <tr><td colSpan={8} className="text-center py-6 text-muted-foreground">No entries on this date.</td></tr>}
+                    )) : <tr><td colSpan={10} className="text-center py-6 text-muted-foreground">No entries on this date.</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -135,6 +139,8 @@ export default function Reports() {
                   <th className="text-left">Party</th>
                   <th className="text-right">Jama Gold</th>
                   <th className="text-right">Naame Gold</th>
+                  <th className="text-right">Jama Silver</th>
+                  <th className="text-right">Naame Silver</th>
                   <th className="text-right">Bal. Gold</th>
                   <th className="text-right">Bal. Fine</th>
                   <th className="text-right">Bal. Silver</th>
@@ -147,12 +153,14 @@ export default function Reports() {
                     <td className="font-medium">{b.party_name}</td>
                     <td className="text-right text-[var(--jama)]">{fmt(b.jama.gold)}</td>
                     <td className="text-right text-[var(--naame)]">{fmt(b.naame.gold)}</td>
+                    <td className="text-right text-[var(--jama)]">{fmt(b.jama.silver)}</td>
+                    <td className="text-right text-[var(--naame)]">{fmt(b.naame.silver)}</td>
                     <td className={`text-right font-semibold ${b.balance.gold < 0 ? "text-[var(--naame)]" : "text-[var(--jama)]"}`}>{fmt(b.balance.gold)}</td>
                     <td className={`text-right font-semibold ${b.balance.fine_gold < 0 ? "text-[var(--naame)]" : "text-[var(--jama)]"}`}>{fmt(b.balance.fine_gold)}</td>
                     <td className={`text-right font-semibold ${b.balance.silver < 0 ? "text-[var(--naame)]" : "text-[var(--jama)]"}`}>{fmt(b.balance.silver)}</td>
                     <td className={`text-right font-semibold ${b.balance.amount < 0 ? "text-[var(--naame)]" : "text-[var(--jama)]"}`}>{fmtINR(b.balance.amount)}</td>
                   </tr>
-                )) : <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">No party data yet.</td></tr>}
+                )) : <tr><td colSpan={9} className="text-center py-6 text-muted-foreground">No party data yet.</td></tr>}
               </tbody>
             </table>
           </div>
