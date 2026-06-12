@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Download, ArrowLeft, Printer } from "lucide-react";
+import { CalendarIcon, Download, ArrowLeft, Printer, Share2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 function DateButton({ value, onChange, placeholder, testid }) {
@@ -57,12 +57,62 @@ export default function PartyLedger() {
     a.click();
   };
 
+  const sanitizePhone = (p) => {
+    if (!p) return "";
+    let d = String(p).replace(/[^\d]/g, "");
+    if (d.length === 10) d = "91" + d; // assume India if 10-digit
+    return d;
+  };
+
+  const fmtN = (n, dec = 3) => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const fmtR = (n) => "Rs. " + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const buildWhatsAppMessage = () => {
+    if (!data) return "";
+    const t = data.totals;
+    const range = start && end ? `${format(parseISO(start), "dd MMM yyyy")} to ${format(parseISO(end), "dd MMM yyyy")}`
+                : start ? `From ${format(parseISO(start), "dd MMM yyyy")}`
+                : end ? `Up to ${format(parseISO(end), "dd MMM yyyy")}` : "All entries";
+    const lines = [
+      "*Shree Gopaldas Vallabhdas Jewellers*",
+      "श्री गोपालदास वल्लभदास ज्वेलर्स",
+      "",
+      `*Party Statement:* ${data.party.name}`,
+      `*Period:* ${range}`,
+      `*Entries:* ${data.entries.length}`,
+      "",
+      "*Jama (जमा)*",
+      `Gold: ${fmtN(t.jama.gold)} g · Fine: ${fmtN(t.jama.fine_gold)} g`,
+      `Silver: ${fmtN(t.jama.silver)} g · Amount: ${fmtR(t.jama.amount)}`,
+      "",
+      "*Naame (नामे)*",
+      `Gold: ${fmtN(t.naame.gold)} g · Fine: ${fmtN(t.naame.fine_gold)} g`,
+      `Silver: ${fmtN(t.naame.silver)} g · Amount: ${fmtR(t.naame.amount)}`,
+      "",
+      "*Net Balance (Jama − Naame)*",
+      `Gold: ${fmtN(t.balance.gold)} g`,
+      `Fine: ${fmtN(t.balance.fine_gold)} g`,
+      `Silver: ${fmtN(t.balance.silver)} g`,
+      `Amount: ${fmtR(t.balance.amount)}`,
+      "",
+      `Generated: ${format(new Date(), "dd MMM yyyy")}`,
+    ];
+    return lines.join("\n");
+  };
+
+  const shareWhatsApp = () => {
+    const text = encodeURIComponent(buildWhatsAppMessage());
+    const phone = sanitizePhone(data?.party?.phone);
+    const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   if (!data) return <div className="p-10 text-sm text-muted-foreground">Loading…</div>;
   const t = data.totals;
   const dateRangeText = start && end ? `${format(parseISO(start), "dd MMM yyyy")} – ${format(parseISO(end), "dd MMM yyyy")}` : (start ? `From ${format(parseISO(start), "dd MMM yyyy")}` : (end ? `Up to ${format(parseISO(end), "dd MMM yyyy")}` : "All entries"));
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="party-ledger-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="party-ledger-page">
       <div className="print-header mb-6 pb-4 border-b-2 border-[#c89e47]">
         <div className="text-center">
           <div className="font-display text-2xl font-black">Shree Gopaldas Vallabhdas Jewellers</div>
@@ -80,6 +130,7 @@ export default function PartyLedger() {
         subtitle={[data.party.phone, data.party.address].filter(Boolean).join(" · ") || "Party ledger statement"}
         actions={
           <>
+            <Button variant="outline" onClick={shareWhatsApp} data-testid="ledger-whatsapp-button" className="text-[#128c7e] hover:text-[#128c7e] hover:bg-[#e7f6f3] border-[#128c7e]/30"><Share2 className="w-4 h-4 mr-1.5" /> WhatsApp</Button>
             <Button variant="outline" onClick={() => window.print()} data-testid="ledger-print-button"><Printer className="w-4 h-4 mr-1.5" /> Print / PDF</Button>
             <Button variant="outline" onClick={exportXl} data-testid="ledger-export-button"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
           </>

@@ -83,7 +83,7 @@ export default function Entries() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="entries-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="entries-page">
       <PageHeader title="Entries Ledger" hindi="बही" subtitle="All Jama / Naame entries"
         actions={
           <>

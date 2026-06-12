@@ -29,7 +29,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="admin-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="admin-page">
       <PageHeader title="Admin · Users" hindi="व्यवस्थापक" subtitle="Manage users and access" />
 
       <div className="bg-white border border-[var(--border)] rounded-sm shadow-ledger overflow-x-auto">

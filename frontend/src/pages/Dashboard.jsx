@@ -26,7 +26,7 @@ export default function Dashboard() {
   const totals = today?.totals || { jama: {}, naame: {}, balance: {} };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="dashboard-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="dashboard-page">
       <PageHeader
         title="Today's Hisab"
         hindi="आज का हिसाब"

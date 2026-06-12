@@ -80,7 +80,7 @@ function UploadCard({ title, hindi, endpoint, sampleHeader, testid }) {
 
 export default function Backup() {
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="backup-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="backup-page">
       <PageHeader title="Backup & Restore" hindi="बैकअप" subtitle="Download CSV backups · import entries and parties from CSV" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">

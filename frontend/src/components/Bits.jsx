@@ -5,12 +5,12 @@ export function PageHeader({ title, hindi, subtitle, actions }) {
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
       <div>
         <div className="flex items-baseline gap-3 flex-wrap">
-          <h1 className="font-display text-3xl sm:text-4xl font-black tracking-tight text-[var(--ink)]">{title}</h1>
-          {hindi && <span className="font-hindi text-base text-muted-foreground">{hindi}</span>}
+          <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[var(--ink)]">{title}</h1>
+          {hindi && <span className="font-hindi text-sm sm:text-base text-muted-foreground">{hindi}</span>}
         </div>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      {actions && <div className="flex gap-2 flex-wrap">{actions}</div>}
     </div>
   );
 }

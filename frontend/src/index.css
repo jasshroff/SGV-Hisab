@@ -77,14 +77,20 @@ body {
   font-size: 11px;
   font-weight: 600;
   color: #5c5f5a;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 .ledger-table td {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+@media (min-width: 768px) {
+  .ledger-table th { padding: 10px 12px; }
+  .ledger-table td { padding: 10px 12px; font-size: 14px; }
 }
 .ledger-table tr:hover td {
   background: #fbf8ef;

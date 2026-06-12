@@ -63,7 +63,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="reports-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="reports-page">
       <PageHeader title="Reports" hindi="रिपोर्ट" subtitle="Daily summary, party balances & exports" />
 
       <Tabs defaultValue="daily">

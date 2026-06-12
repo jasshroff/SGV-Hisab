@@ -47,7 +47,7 @@ export default function Parties() {
   const balanceMap = Object.fromEntries(balances.map((b) => [b.party_id, b]));
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto" data-testid="parties-page">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto" data-testid="parties-page">
       <PageHeader title="Parties" hindi="पार्टी" subtitle="Customers & suppliers ledger"
         actions={<Button className="gold-btn" onClick={openNew} data-testid="party-new-button"><Plus className="w-4 h-4 mr-1.5" /> New Party</Button>}
       />
