@@ -126,7 +126,15 @@ app = FastAPI(title="Shree Gopaldas Vallabhdas Jewellers - Hisab")
 api = APIRouter(prefix="/api")
 
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-allow_origins = [frontend_url, "http://localhost:3000"]
+cors_origins_str = os.environ.get("CORS_ORIGINS", "*").strip()
+if cors_origins_str == "*":
+    allow_origins = ["*"]
+else:
+    allow_origins = [o.strip() for o in cors_origins_str.split(",") if o.strip()]
+    # Always include the configured frontend URL and local dev
+    for extra in (frontend_url, "http://localhost:3000"):
+        if extra and extra not in allow_origins:
+            allow_origins.append(extra)
 
 app.add_middleware(
     CORSMiddleware,
@@ -230,7 +238,10 @@ async def me(user: dict = Depends(get_current_user)):
 # ---------- Parties ----------
 @api.get("/parties")
 async def list_parties(user: dict = Depends(get_current_user)):
-    cursor = db.parties.find({}).sort("name", 1)
+    cursor = db.parties.find(
+        {},
+        {"name": 1, "phone": 1, "address": 1, "notes": 1, "created_at": 1},
+    ).sort("name", 1).limit(10000)
     parties = [serialize_party(p) async for p in cursor]
     return parties
 
@@ -442,7 +453,7 @@ async def report_party_balances(user: dict = Depends(get_current_user)):
             "count": {"$sum": 1},
         }}
     ]
-    agg = await db.entries.aggregate(pipeline).to_list(length=10000)
+    agg = await db.entries.aggregate(pipeline).to_list(length=100000)
     parties: dict = {}
     for row in agg:
         pid = row["_id"]["party_id"]
@@ -482,7 +493,7 @@ async def export_entries(
             q["date"]["$lte"] = end_date
     if party_id:
         q["party_id"] = party_id
-    cursor = db.entries.find(q).sort([("date", 1), ("created_at", 1)])
+    cursor = db.entries.find(q).sort([("date", 1), ("created_at", 1)]).limit(50000)
     entries = [serialize_entry(e) async for e in cursor]
 
     wb = Workbook()
@@ -716,7 +727,7 @@ async def undo_closing(period: str, user: dict = Depends(require_admin)):
 # ---------- Backup / CSV ----------
 @api.get("/backup/entries.csv")
 async def backup_entries_csv(user: dict = Depends(get_current_user)):
-    cursor = db.entries.find({}).sort([("date", 1), ("created_at", 1)])
+    cursor = db.entries.find({}).sort([("date", 1), ("created_at", 1)]).limit(100000)
     rows = [serialize_entry(e) async for e in cursor]
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -734,7 +745,10 @@ async def backup_entries_csv(user: dict = Depends(get_current_user)):
 
 @api.get("/backup/parties.csv")
 async def backup_parties_csv(user: dict = Depends(get_current_user)):
-    cursor = db.parties.find({}).sort("name", 1)
+    cursor = db.parties.find(
+        {},
+        {"name": 1, "phone": 1, "address": 1, "notes": 1, "created_at": 1},
+    ).sort("name", 1).limit(50000)
     rows = [serialize_party(p) async for p in cursor]
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -834,7 +848,7 @@ async def restore_entries_csv(file: UploadFile = File(...), user: dict = Depends
 # ---------- Admin: Users management ----------
 @api.get("/admin/users")
 async def list_users(user: dict = Depends(require_admin)):
-    cursor = db.users.find({}).sort("created_at", -1)
+    cursor = db.users.find({}, {"password_hash": 0}).sort("created_at", -1).limit(10000)
     return [serialize_user(u) async for u in cursor]
 
 @api.put("/admin/users/{user_id}")
