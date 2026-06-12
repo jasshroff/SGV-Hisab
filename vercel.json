@@ -1,38 +1,13 @@
 {
-  "version": 2,
-  "buildCommand": "cd frontend && yarn install --frozen-lockfile && yarn build",
-  "outputDirectory": "frontend/build",
-  "installCommand": "pip install -r backend/requirements.txt",
-  "framework": null,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+  "experimentalServices": {
+    "frontend": {
+      "root": "frontend",
+      "routePrefix": "/",
+      "framework": "create-react-app"
     },
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
+    "backend": {
+      "root": "backend",
+      "routePrefix": "/_/backend"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "MONGO_URL": "@mongo_url",
-    "DB_NAME": "@db_name",
-    "JWT_SECRET": "@jwt_secret",
-    "ADMIN_EMAIL": "@admin_email",
-    "ADMIN_PASSWORD": "@admin_password",
-    "CORS_ORIGINS": "@cors_origins"
   }
 }
