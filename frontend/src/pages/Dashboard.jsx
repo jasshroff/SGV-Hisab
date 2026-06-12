@@ -61,8 +61,8 @@ export default function Dashboard() {
             { l: "Fine (g)", v: fmt(totals.balance?.fine_gold), h: "फाइन" },
             { l: "Silver (g)", v: fmt(totals.balance?.silver), h: "चांदी" },
             { l: "Amount", v: fmtINR(totals.balance?.amount), h: "रकम" },
-          ].map((b, i) => (
-            <div key={i} className="px-5 py-4">
+          ].map((b) => (
+            <div key={b.l} className="px-5 py-4">
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{b.l} <span className="font-hindi normal-case">{b.h}</span></div>
               <div className={`mt-1 font-display text-2xl font-bold tabular-nums ${Number(String(b.v).replace(/[^\d.-]/g,"")) < 0 ? "text-[var(--naame)]" : "text-[var(--jama)]"}`}>{b.v}</div>
             </div>

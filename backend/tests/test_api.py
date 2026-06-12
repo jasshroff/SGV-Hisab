@@ -6,8 +6,8 @@ import requests
 BASE = os.environ.get("REACT_APP_BACKEND_URL", "https://gopaldas-accounts.preview.emergentagent.com").rstrip("/")
 API = f"{BASE}/api"
 
-ADMIN_EMAIL = "admin@gopaldas.com"
-ADMIN_PASSWORD = "Admin@123"
+ADMIN_EMAIL = os.environ.get("TEST_ADMIN_EMAIL", "admin@gopaldas.com")
+ADMIN_PASSWORD = os.environ.get("TEST_ADMIN_PASSWORD", "Admin@123")
 
 
 @pytest.fixture(scope="session")

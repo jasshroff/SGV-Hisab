@@ -187,14 +187,11 @@ async def register(payload: RegisterIn, response: Response):
     email = payload.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Email already registered")
-    # First registered user becomes admin if no admin exists (besides seeded)
-    count = await db.users.count_documents({})
-    role = "user"
     doc = {
         "email": email,
         "password_hash": hash_password(payload.password),
         "name": payload.name.strip(),
-        "role": role,
+        "role": "user",
         "active": True,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -812,8 +809,10 @@ async def restore_entries_csv(file: UploadFile = File(...), user: dict = Depends
 
             def num(k):
                 v = row.get(k)
-                try: return float(v) if v not in (None, "",) else 0.0
-                except: return 0.0
+                try:
+                    return float(v) if v not in (None, "") else 0.0
+                except (TypeError, ValueError):
+                    return 0.0
 
             await db.entries.insert_one({
                 "date": date,

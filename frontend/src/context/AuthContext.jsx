@@ -49,7 +49,11 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await api.post("/auth/logout");
-    } catch {}
+    } catch (e) {
+      // Logout should always succeed locally even if the server call fails
+      // (e.g., offline, expired token). Surface to console for debugging.
+      console.debug("logout server call failed (ignored):", e?.message);
+    }
     localStorage.removeItem("access_token");
     setUser(false);
   };
