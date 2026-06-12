@@ -308,6 +308,163 @@ def test_restore_entries_csv_admin_with_errors(admin_token):
     requests.delete(f"{API}/parties/{pid}", headers=H(admin_token))
 
 
+# ---------- Phase 4: Month-End Closing tests ----------
+# Uses period 2025-01 which has no production data → safe (created=0, skipped=0)
+
+CLOSING_TEST_PERIOD = "2025-01"
+CLOSING_EXPECTED_OPENING_DATE = "2025-02-01"
+
+
+def _ensure_no_existing_closing(admin_token, period):
+    requests.delete(f"{API}/closings/{period}", headers=H(admin_token))
+
+
+def test_closings_list_authenticated(admin_token):
+    r = requests.get(f"{API}/closings", headers=H(admin_token))
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
+def test_closings_list_unauth():
+    r = requests.get(f"{API}/closings")
+    assert r.status_code == 401
+
+
+def test_closings_preview_opening_date_next_month(admin_token):
+    r = requests.get(f"{API}/closings/preview", params={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["period"] == CLOSING_TEST_PERIOD
+    assert data["opening_date"] == CLOSING_EXPECTED_OPENING_DATE
+    assert "already_run" in data
+    assert isinstance(data["parties_with_balance"], list)
+    # December rollover: 2026-12 -> 2027-01-01
+    r2 = requests.get(f"{API}/closings/preview", params={"period": "2026-12"}, headers=H(admin_token))
+    assert r2.status_code == 200
+    assert r2.json()["opening_date"] == "2027-01-01"
+
+
+def test_closings_preview_invalid_period(admin_token):
+    r = requests.get(f"{API}/closings/preview", params={"period": "feb-2026"}, headers=H(admin_token))
+    assert r.status_code == 400
+
+
+def test_closings_run_invalid_period(admin_token):
+    r = requests.post(f"{API}/closings/run", json={"period": "feb-2026"}, headers=H(admin_token))
+    assert r.status_code == 400
+
+
+def test_closings_run_non_admin_forbidden(user_creds):
+    r = requests.post(f"{API}/closings/run", json={"period": CLOSING_TEST_PERIOD}, headers=H(user_creds["token"]))
+    assert r.status_code == 403
+
+
+def test_closings_run_and_undo_safe_period(admin_token):
+    # Use 2025-01 which has no entries -> created=0, skipped=0
+    _ensure_no_existing_closing(admin_token, CLOSING_TEST_PERIOD)
+
+    # Preview shows already_run False
+    pv = requests.get(f"{API}/closings/preview", params={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
+    assert pv.status_code == 200
+    assert pv.json()["already_run"] is False
+
+    # Run closing
+    r = requests.post(f"{API}/closings/run", json={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["period"] == CLOSING_TEST_PERIOD
+    assert data["opening_date"] == CLOSING_EXPECTED_OPENING_DATE
+    assert data["created"] == 0
+    assert data["skipped"] == 0
+
+    # GET /closings now contains this period
+    lst = requests.get(f"{API}/closings", headers=H(admin_token))
+    assert lst.status_code == 200
+    assert any(c["period"] == CLOSING_TEST_PERIOD for c in lst.json())
+
+    # Preview now shows already_run True
+    pv2 = requests.get(f"{API}/closings/preview", params={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
+    assert pv2.json()["already_run"] is True
+
+    # Re-run blocked
+    r2 = requests.post(f"{API}/closings/run", json={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
+    assert r2.status_code == 400
+    detail = (r2.json().get("detail") or "").lower()
+    assert "already" in detail
+
+    # Undo
+    u = requests.delete(f"{API}/closings/{CLOSING_TEST_PERIOD}", headers=H(admin_token))
+    assert u.status_code == 200, u.text
+    udata = u.json()
+    assert udata["ok"] is True
+    assert "deleted_entries" in udata
+
+    # Undo of non-existent returns 404
+    u2 = requests.delete(f"{API}/closings/{CLOSING_TEST_PERIOD}", headers=H(admin_token))
+    assert u2.status_code == 404
+
+
+def test_closings_run_creates_opening_entries_with_flag(admin_token):
+    """Verify is_opening + closing_period tags are correctly applied for parties with balance."""
+    unique = uuid.uuid4().hex[:6]
+    pname = f"TEST_ClosePty_{unique}"
+    # create party
+    pr = requests.post(f"{API}/parties", json={"name": pname, "phone": "1", "address": "", "notes": ""}, headers=H(admin_token))
+    assert pr.status_code == 200
+    pid = pr.json()["id"]
+    test_period = "2024-06"  # safe historical period unlikely to have data
+    opening_date = "2024-07-01"
+    _ensure_no_existing_closing(admin_token, test_period)
+
+    # add a jama entry in test_period for this party
+    er = requests.post(f"{API}/entries", json={
+        "date": "2024-06-15", "party_id": pid, "item_name": "TEST_Bal",
+        "type": "jama", "gold": 10, "fine_gold": 9, "silver": 0, "touch": 90, "amount": 1000
+    }, headers=H(admin_token))
+    assert er.status_code == 200, er.text
+    eid = er.json()["id"]
+
+    try:
+        # Preview should now show this party
+        pv = requests.get(f"{API}/closings/preview", params={"period": test_period}, headers=H(admin_token))
+        assert pv.status_code == 200, pv.text
+        parties = pv.json()["parties_with_balance"]
+        ours = next((p for p in parties if p["party_id"] == pid), None)
+        assert ours is not None, f"party not in preview: {parties}"
+        assert ours["type"] == "jama"
+        assert ours["balance"]["gold"] == 10
+
+        # Run closing
+        rc = requests.post(f"{API}/closings/run", json={"period": test_period}, headers=H(admin_token))
+        assert rc.status_code == 200, rc.text
+        assert rc.json()["created"] >= 1
+        assert rc.json()["opening_date"] == opening_date
+
+        # Verify opening entry exists for this party at opening_date with item_name='Opening Balance'
+        # NOTE: serialize_entry does NOT expose is_opening/closing_period — see test_report action item
+        entries = requests.get(f"{API}/entries", params={"party_id": pid}, headers=H(admin_token)).json()
+        openings = [e for e in entries if e["date"] == opening_date and e["item_name"] == "Opening Balance"]
+        assert len(openings) == 1, f"expected 1 opening entry on {opening_date}, got {openings}"
+        op = openings[0]
+        assert op["type"] == "jama"
+        assert op["gold"] == 10  # positive stored, sign encoded via type
+        assert "Carried forward from 2024-06" in op.get("remarks", "")
+
+        # Undo deletes opening entries
+        u = requests.delete(f"{API}/closings/{test_period}", headers=H(admin_token))
+        assert u.status_code == 200
+        assert u.json()["deleted_entries"] >= 1
+
+        # After undo, no opening entry on opening_date remains
+        entries2 = requests.get(f"{API}/entries", params={"party_id": pid}, headers=H(admin_token)).json()
+        assert not [e for e in entries2 if e["date"] == opening_date and e["item_name"] == "Opening Balance"]
+    finally:
+        # cleanup
+        _ensure_no_existing_closing(admin_token, test_period)
+        requests.delete(f"{API}/entries/{eid}", headers=H(admin_token))
+        requests.delete(f"{API}/parties/{pid}", headers=H(admin_token))
+
+
 def test_cleanup(admin_token, party_id):
     # Delete entries for this party then party
     r = requests.get(f"{API}/entries", params={"party_id": party_id}, headers=H(admin_token))

@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Download } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import Closings from "@/components/Closings";
 
 function DateButton({ value, onChange, placeholder, testid }) {
   return (
@@ -71,6 +72,7 @@ export default function Reports() {
           <TabsTrigger value="daily" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#c89e47] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2" data-testid="tab-daily">Daily Hisab</TabsTrigger>
           <TabsTrigger value="parties" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#c89e47] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2" data-testid="tab-party-balances">Party Balances</TabsTrigger>
           <TabsTrigger value="export" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#c89e47] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2" data-testid="tab-export">Export</TabsTrigger>
+          <TabsTrigger value="closings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#c89e47] data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2" data-testid="tab-closings">Month-End</TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily" className="mt-6">
@@ -166,6 +168,10 @@ export default function Reports() {
             </div>
             <Button onClick={exportRange} className="gold-btn mt-5" data-testid="export-button"><Download className="w-4 h-4 mr-1.5" /> Download Excel</Button>
           </div>
+        </TabsContent>
+
+        <TabsContent value="closings" className="mt-6">
+          <Closings />
         </TabsContent>
       </Tabs>
     </div>

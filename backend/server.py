@@ -516,6 +516,208 @@ async def export_entries(
         headers={"Content-Disposition": f"attachment; filename={fname}"},
     )
 
+# ---------- Monthly Closing / Carry-forward ----------
+def _next_month_first_day(period: str) -> str:
+    try:
+        y, m = period.split("-")
+        y, m = int(y), int(m)
+    except Exception:
+        raise HTTPException(status_code=400, detail="period must be YYYY-MM")
+    if m == 12:
+        return f"{y+1:04d}-01-01"
+    return f"{y:04d}-{m+1:02d}-01"
+
+def _last_day_of_period(period: str) -> str:
+    try:
+        y, m = period.split("-")
+        y, m = int(y), int(m)
+    except Exception:
+        raise HTTPException(status_code=400, detail="period must be YYYY-MM")
+    if m == 12:
+        nxt = datetime(y + 1, 1, 1)
+    else:
+        nxt = datetime(y, m + 1, 1)
+    last = nxt - timedelta(days=1)
+    return last.date().isoformat()
+
+class ClosingRunIn(BaseModel):
+    period: str  # YYYY-MM
+
+@api.get("/closings")
+async def list_closings(user: dict = Depends(get_current_user)):
+    cursor = db.closings.find({}).sort("period", -1)
+    out = []
+    async for c in cursor:
+        out.append({
+            "id": str(c["_id"]),
+            "period": c.get("period"),
+            "run_at": c.get("run_at"),
+            "run_by_name": c.get("run_by_name"),
+            "entries_count": c.get("entries_count", 0),
+            "skipped": c.get("skipped", 0),
+            "opening_date": c.get("opening_date"),
+        })
+    return out
+
+@api.get("/closings/preview")
+async def preview_closing(period: str, user: dict = Depends(get_current_user)):
+    last_day = _last_day_of_period(period)
+    opening_date = _next_month_first_day(period)
+    pipeline = [
+        {"$match": {"date": {"$lte": last_day}}},
+        {"$group": {
+            "_id": {"party_id": "$party_id", "type": "$type"},
+            "party_name": {"$first": "$party_name"},
+            "gold": {"$sum": "$gold"},
+            "fine_gold": {"$sum": "$fine_gold"},
+            "silver": {"$sum": "$silver"},
+            "amount": {"$sum": "$amount"},
+        }}
+    ]
+    agg = await db.entries.aggregate(pipeline).to_list(length=100000)
+    parties_map: dict = {}
+    for row in agg:
+        pid = row["_id"]["party_id"]
+        t = row["_id"]["type"]
+        parties_map.setdefault(pid, {"party_id": pid, "party_name": row.get("party_name", ""),
+                                     "jama": {"gold": 0, "fine_gold": 0, "silver": 0, "amount": 0},
+                                     "naame": {"gold": 0, "fine_gold": 0, "silver": 0, "amount": 0}})
+        if t in ("jama", "naame"):
+            parties_map[pid][t] = {"gold": row.get("gold", 0), "fine_gold": row.get("fine_gold", 0),
+                                   "silver": row.get("silver", 0), "amount": row.get("amount", 0)}
+    result = []
+    for v in parties_map.values():
+        bal = {
+            "gold": v["jama"]["gold"] - v["naame"]["gold"],
+            "fine_gold": v["jama"]["fine_gold"] - v["naame"]["fine_gold"],
+            "silver": v["jama"]["silver"] - v["naame"]["silver"],
+            "amount": v["jama"]["amount"] - v["naame"]["amount"],
+        }
+        if all(abs(x) < 0.0001 for x in bal.values()):
+            continue
+        signal = bal["amount"] if abs(bal["amount"]) >= 0.0001 else (
+            bal["gold"] if abs(bal["gold"]) >= 0.0001 else (
+                bal["fine_gold"] if abs(bal["fine_gold"]) >= 0.0001 else bal["silver"]
+            )
+        )
+        result.append({
+            "party_id": v["party_id"],
+            "party_name": v["party_name"],
+            "balance": bal,
+            "type": "jama" if signal >= 0 else "naame",
+        })
+    result.sort(key=lambda x: x["party_name"].lower())
+    already = await db.closings.find_one({"period": period}) is not None
+    return {
+        "period": period,
+        "opening_date": opening_date,
+        "already_run": already,
+        "parties_with_balance": result,
+        "skipped_count": 0,
+    }
+
+@api.post("/closings/run")
+async def run_closing(payload: ClosingRunIn, user: dict = Depends(require_admin)):
+    period = payload.period.strip()
+    if await db.closings.find_one({"period": period}):
+        raise HTTPException(status_code=400, detail=f"Closing for {period} already exists. Undo it first to re-run.")
+    last_day = _last_day_of_period(period)
+    opening_date = _next_month_first_day(period)
+
+    pipeline = [
+        {"$match": {"date": {"$lte": last_day}}},
+        {"$group": {
+            "_id": {"party_id": "$party_id", "type": "$type"},
+            "party_name": {"$first": "$party_name"},
+            "gold": {"$sum": "$gold"},
+            "fine_gold": {"$sum": "$fine_gold"},
+            "silver": {"$sum": "$silver"},
+            "amount": {"$sum": "$amount"},
+        }}
+    ]
+    agg = await db.entries.aggregate(pipeline).to_list(length=100000)
+    parties_map: dict = {}
+    for row in agg:
+        pid = row["_id"]["party_id"]
+        t = row["_id"]["type"]
+        parties_map.setdefault(pid, {"party_name": row.get("party_name", ""),
+                                     "jama": {"gold": 0, "fine_gold": 0, "silver": 0, "amount": 0},
+                                     "naame": {"gold": 0, "fine_gold": 0, "silver": 0, "amount": 0}})
+        if t in ("jama", "naame"):
+            parties_map[pid][t] = {"gold": row.get("gold", 0), "fine_gold": row.get("fine_gold", 0),
+                                   "silver": row.get("silver", 0), "amount": row.get("amount", 0)}
+
+    created_entry_ids: list = []
+    skipped = 0
+    for pid, v in parties_map.items():
+        bal = {
+            "gold": v["jama"]["gold"] - v["naame"]["gold"],
+            "fine_gold": v["jama"]["fine_gold"] - v["naame"]["fine_gold"],
+            "silver": v["jama"]["silver"] - v["naame"]["silver"],
+            "amount": v["jama"]["amount"] - v["naame"]["amount"],
+        }
+        if all(abs(x) < 0.0001 for x in bal.values()):
+            skipped += 1
+            continue
+        signal = bal["amount"] if abs(bal["amount"]) >= 0.0001 else (
+            bal["gold"] if abs(bal["gold"]) >= 0.0001 else (
+                bal["fine_gold"] if abs(bal["fine_gold"]) >= 0.0001 else bal["silver"]
+            )
+        )
+        etype = "jama" if signal >= 0 else "naame"
+        # Store absolute values; sign encoded by type. Mixed signs across asset classes
+        # are collapsed (rare case) — operator can edit the opening entry afterwards.
+        doc = {
+            "date": opening_date,
+            "party_id": pid,
+            "party_name": v["party_name"],
+            "item_name": "Opening Balance",
+            "type": etype,
+            "gold": abs(bal["gold"]),
+            "fine_gold": abs(bal["fine_gold"]),
+            "silver": abs(bal["silver"]),
+            "touch": 0,
+            "amount": abs(bal["amount"]),
+            "remarks": f"Carried forward from {period}",
+            "is_opening": True,
+            "closing_period": period,
+            "created_by": user["id"],
+            "created_by_name": user.get("name", user.get("email", "")),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        res = await db.entries.insert_one(doc)
+        created_entry_ids.append(str(res.inserted_id))
+
+    closing_doc = {
+        "period": period,
+        "opening_date": opening_date,
+        "last_day": last_day,
+        "run_at": datetime.now(timezone.utc).isoformat(),
+        "run_by": user["id"],
+        "run_by_name": user.get("name", user.get("email", "")),
+        "entries_count": len(created_entry_ids),
+        "skipped": skipped,
+        "entry_ids": created_entry_ids,
+    }
+    await db.closings.insert_one(closing_doc)
+    return {
+        "period": period,
+        "opening_date": opening_date,
+        "created": len(created_entry_ids),
+        "skipped": skipped,
+    }
+
+@api.delete("/closings/{period}")
+async def undo_closing(period: str, user: dict = Depends(require_admin)):
+    closing = await db.closings.find_one({"period": period})
+    if not closing:
+        raise HTTPException(status_code=404, detail="Closing not found")
+    ids = [ObjectId(x) for x in closing.get("entry_ids", [])]
+    if ids:
+        await db.entries.delete_many({"_id": {"$in": ids}})
+    await db.closings.delete_one({"_id": closing["_id"]})
+    return {"ok": True, "deleted_entries": len(ids)}
+
 # ---------- Backup / CSV ----------
 @api.get("/backup/entries.csv")
 async def backup_entries_csv(user: dict = Depends(get_current_user)):
