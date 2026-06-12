@@ -18,16 +18,43 @@ def admin_token():
 
 
 @pytest.fixture(scope="session")
-def user_creds():
+def user_creds(admin_token):
     email = f"TEST_user_{uuid.uuid4().hex[:6]}@gopaldas.com"
     pw = "User@123"
     r = requests.post(f"{API}/auth/register", json={"email": email, "password": pw, "name": "Test User"})
     assert r.status_code == 200, r.text
-    return {"email": email, "password": pw, "token": r.json()["access_token"], "id": r.json()["user"]["id"]}
+    user = {"email": email, "password": pw, "token": r.json()["access_token"], "id": r.json()["user"]["id"]}
+    yield user
+    # Always remove the test user account after the session so the admin panel
+    # is not polluted by repeated test runs.
+    try:
+        requests.delete(f"{API}/admin/users/{user['id']}", headers=H(admin_token), timeout=10)
+    except Exception:
+        pass
 
 
 def H(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _sweep_test_users_at_session_end():
+    """Final safety net: remove any 'test_user_*@gopaldas.com' accounts that
+    leaked from this or a previous interrupted test run, so the live admin
+    users panel stays clean."""
+    yield
+    try:
+        r = requests.post(f"{API}/auth/login",
+                          json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}, timeout=10)
+        if r.status_code != 200:
+            return
+        tok = r.json()["access_token"]
+        users = requests.get(f"{API}/admin/users", headers=H(tok), timeout=10).json()
+        for u in users:
+            if u.get("email", "").startswith("test_user_"):
+                requests.delete(f"{API}/admin/users/{u['id']}", headers=H(tok), timeout=10)
+    except Exception:
+        pass
 
 
 def test_root():
