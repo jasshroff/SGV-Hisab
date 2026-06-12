@@ -177,6 +177,8 @@ def serialize_entry(e: dict) -> dict:
         "created_by": e.get("created_by"),
         "created_by_name": e.get("created_by_name"),
         "created_at": e.get("created_at"),
+        "is_opening": e.get("is_opening", False),
+        "closing_period": e.get("closing_period"),
     }
 
 # ---------- Auth endpoints ----------

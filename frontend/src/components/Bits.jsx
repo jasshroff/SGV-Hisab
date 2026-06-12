@@ -44,3 +44,11 @@ export function TypePill({ type }) {
     return <span className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide jama-pill rounded-sm">Jama <span className="font-hindi font-normal">जमा</span></span>;
   return <span className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide naame-pill rounded-sm">Naame <span className="font-hindi font-normal">नामे</span></span>;
 }
+
+export function OpeningBadge() {
+  return (
+    <span className="ml-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-sm bg-[#f5ebd2] text-[#8a6b1f] border border-[#e0c789]">
+      Opening
+    </span>
+  );
+}

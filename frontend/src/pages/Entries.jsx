@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api, { API, formatApiErrorDetail } from "@/lib/api";
-import { PageHeader, fmt, fmtINR, TypePill } from "@/components/Bits";
+import { PageHeader, fmt, fmtINR, TypePill, OpeningBadge } from "@/components/Bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,7 +150,7 @@ export default function Entries() {
               <tr key={e.id}>
                 <td>{format(parseISO(e.date), "dd MMM yyyy")}</td>
                 <td className="font-medium">{e.party_name}</td>
-                <td>{e.item_name}</td>
+                <td>{e.item_name}{e.is_opening && <OpeningBadge />}</td>
                 <td><TypePill type={e.type} /></td>
                 <td className="text-right">{fmt(e.gold)}</td>
                 <td className="text-right">{fmt(e.fine_gold)}</td>

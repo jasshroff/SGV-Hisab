@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api, { API } from "@/lib/api";
-import { PageHeader, fmt, fmtINR, TypePill, StatCard } from "@/components/Bits";
+import { PageHeader, fmt, fmtINR, TypePill, StatCard, OpeningBadge } from "@/components/Bits";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -178,7 +178,7 @@ export default function PartyLedger() {
             {data.entries.length ? data.entries.map((e) => (
               <tr key={e.id}>
                 <td>{format(parseISO(e.date), "dd MMM yyyy")}</td>
-                <td>{e.item_name}</td>
+                <td>{e.item_name}{e.is_opening && <OpeningBadge />}</td>
                 <td><TypePill type={e.type} /></td>
                 <td className="text-right">{fmt(e.gold)}</td>
                 <td className="text-right">{fmt(e.fine_gold)}</td>
