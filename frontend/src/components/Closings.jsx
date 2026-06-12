@@ -31,7 +31,7 @@ export default function Closings() {
     const r = await api.get("/closings");
     setClosings(r.data);
   };
-  useEffect(() => { loadClosings(); }, []);
+  useEffect(() => { loadClosings(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runPreview = async () => {
     setPreview(null);

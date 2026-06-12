@@ -23,7 +23,7 @@ export default function Parties() {
     const [p, b] = await Promise.all([api.get("/parties"), api.get("/reports/party-balances")]);
     setParties(p.data); setBalances(b.data);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openNew = () => { setEdit(null); setForm({ name: "", phone: "", address: "", notes: "" }); setOpen(true); };
   const openEdit = (p) => { setEdit(p); setForm({ name: p.name, phone: p.phone || "", address: p.address || "", notes: p.notes || "" }); setOpen(true); };

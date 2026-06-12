@@ -39,7 +39,7 @@ export default function PartyLedger() {
     const r = await api.get(`/reports/party/${id}?${q.toString()}`);
     setData(r.data);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [id, start, end]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id, start, end]);
 
   const exportXl = async () => {
     const q = new URLSearchParams();

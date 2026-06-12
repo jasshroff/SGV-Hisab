@@ -21,7 +21,7 @@ export default function Dashboard() {
     setParties(p.data);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totals = today?.totals || { jama: {}, naame: {}, balance: {} };
 

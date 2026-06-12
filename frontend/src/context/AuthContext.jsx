@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
         setUser(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email, password) => {

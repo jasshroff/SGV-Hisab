@@ -46,6 +46,7 @@ export default function Reports() {
       const b = await api.get("/reports/party-balances");
       setBalances(b.data);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const exportRange = async () => {

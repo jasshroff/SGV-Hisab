@@ -16,7 +16,7 @@ export default function Admin() {
     const r = await api.get("/admin/users");
     setUsers(r.data);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleActive = async (u) => {
     try { await api.put(`/admin/users/${u.id}`, { active: !u.active }); toast.success("Updated"); load(); }
