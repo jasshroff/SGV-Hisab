@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from pathlib import Path
+from contextlib import asynccontextmanager
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
@@ -121,8 +122,37 @@ class UserUpdate(BaseModel):
     active: Optional[bool] = None
     role: Optional[str] = None
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic: create indexes and seed admin
+    await db.users.create_index("email", unique=True)
+    await db.parties.create_index("name")
+    await db.entries.create_index([("date", -1)])
+    await db.entries.create_index("party_id")
+    # Seed admin
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@gopaldas.com").lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "Admin@123")
+    existing = await db.users.find_one({"email": admin_email})
+    if not existing:
+        await db.users.insert_one({
+            "email": admin_email,
+            "password_hash": hash_password(admin_password),
+            "name": "Admin",
+            "role": "admin",
+            "active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        logger.info(f"Seeded admin user: {admin_email}")
+    elif not verify_password(admin_password, existing["password_hash"]):
+        await db.users.update_one({"email": admin_email},
+                                  {"$set": {"password_hash": hash_password(admin_password),
+                                            "role": "admin", "active": True}})
+    yield
+    # Shutdown logic: close DB connection
+    client.close()
+
 # ---------- App ----------
-app = FastAPI(title="Shree Gopaldas Vallabhdas Jewellers - Hisab")
+app = FastAPI(title="Shree Gopaldas Vallabhdas Jewellers - Hisab", lifespan=lifespan)
 api = APIRouter(prefix="/api")
 
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
@@ -882,32 +912,4 @@ async def root():
 
 app.include_router(api)
 
-# ---------- Startup ----------
-@app.on_event("startup")
-async def on_start():
-    await db.users.create_index("email", unique=True)
-    await db.parties.create_index("name")
-    await db.entries.create_index([("date", -1)])
-    await db.entries.create_index("party_id")
-    # Seed admin
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@gopaldas.com").lower()
-    admin_password = os.environ.get("ADMIN_PASSWORD", "Admin@123")
-    existing = await db.users.find_one({"email": admin_email})
-    if not existing:
-        await db.users.insert_one({
-            "email": admin_email,
-            "password_hash": hash_password(admin_password),
-            "name": "Admin",
-            "role": "admin",
-            "active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
-        logger.info(f"Seeded admin user: {admin_email}")
-    elif not verify_password(admin_password, existing["password_hash"]):
-        await db.users.update_one({"email": admin_email},
-                                  {"$set": {"password_hash": hash_password(admin_password),
-                                            "role": "admin", "active": True}})
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    client.close()
+# Lifespan events are handled via asynccontextmanager at application startup.
