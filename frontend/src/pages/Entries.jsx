@@ -46,7 +46,10 @@ export default function Entries() {
     setEntries(e.data); setParties(p.data);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filters]);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const totals = useMemo(() => {
     const t = { jama: { gold: 0, fine_gold: 0, silver: 0, amount: 0 }, naame: { gold: 0, fine_gold: 0, silver: 0, amount: 0 } };
