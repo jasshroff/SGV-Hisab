@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LayoutDashboard, BookOpen, Users, FileBarChart2, Shield, LogOut, Coins, DatabaseBackup, Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const NavItem = ({ to, icon: Icon, label, hindi, testid, onClick }) => (
   <NavLink
@@ -95,6 +96,10 @@ export default function Layout({ children }) {
               </button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72">
+              <VisuallyHidden>
+                <SheetTitle>Navigation</SheetTitle>
+                <SheetDescription>Main navigation menu</SheetDescription>
+              </VisuallyHidden>
               <SidebarContent onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>

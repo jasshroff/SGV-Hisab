@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -99,6 +99,7 @@ export default function Parties() {
         <DialogContent data-testid="party-dialog">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">{edit ? "Edit Party" : "New Party"}</DialogTitle>
+            <DialogDescription className="sr-only">Add or edit a party (customer/supplier) record.</DialogDescription>
           </DialogHeader>
           <form onSubmit={save} className="space-y-4">
             <div><Label>Name <span className="font-hindi text-xs text-muted-foreground">(नाम)</span></Label>

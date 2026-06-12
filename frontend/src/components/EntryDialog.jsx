@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -150,6 +150,7 @@ export default function EntryDialog({ open, onOpenChange, parties, editEntry, on
           <DialogTitle className="font-display text-2xl">
             {editEntry ? "Edit Entry" : "New Entry"} <span className="font-hindi text-base text-muted-foreground ml-2">{editEntry ? "एंट्री संपादित करें" : "नई एंट्री"}</span>
           </DialogTitle>
+          <DialogDescription className="sr-only">Add or edit a Jama / Naame ledger entry with party, item, gold, fine, silver, touch, amount and remarks.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
