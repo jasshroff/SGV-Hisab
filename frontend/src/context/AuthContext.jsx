@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api, { formatApiErrorDetail } from "@/lib/api";
 
 const AuthContext = createContext(null);
@@ -58,8 +58,13 @@ export function AuthProvider({ children }) {
     setUser(false);
   };
 
+  const value = useMemo(
+    () => ({ user, login, register, logout, error }),
+    [user, error]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, error }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

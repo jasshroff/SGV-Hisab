@@ -516,28 +516,24 @@ async def export_entries(
     )
 
 # ---------- Monthly Closing / Carry-forward ----------
-def _next_month_first_day(period: str) -> str:
+def _parse_period(period: str) -> tuple[int, int]:
+    """Parse 'YYYY-MM' into (year, month). Raises HTTPException 400 on bad input."""
     try:
-        y, m = period.split("-")
-        y, m = int(y), int(m)
-    except Exception:
+        y_str, m_str = period.split("-")
+        return int(y_str), int(m_str)
+    except (ValueError, AttributeError):
         raise HTTPException(status_code=400, detail="period must be YYYY-MM")
+
+def _next_month_first_day(period: str) -> str:
+    y, m = _parse_period(period)
     if m == 12:
         return f"{y+1:04d}-01-01"
     return f"{y:04d}-{m+1:02d}-01"
 
 def _last_day_of_period(period: str) -> str:
-    try:
-        y, m = period.split("-")
-        y, m = int(y), int(m)
-    except Exception:
-        raise HTTPException(status_code=400, detail="period must be YYYY-MM")
-    if m == 12:
-        nxt = datetime(y + 1, 1, 1)
-    else:
-        nxt = datetime(y, m + 1, 1)
-    last = nxt - timedelta(days=1)
-    return last.date().isoformat()
+    y, m = _parse_period(period)
+    nxt = datetime(y + 1, 1, 1) if m == 12 else datetime(y, m + 1, 1)
+    return (nxt - timedelta(days=1)).date().isoformat()
 
 class ClosingRunIn(BaseModel):
     period: str  # YYYY-MM

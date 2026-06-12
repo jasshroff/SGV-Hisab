@@ -215,7 +215,7 @@ def test_non_admin_cannot_delete_party(user_creds, party_id):
 def test_admin_can_toggle_user(admin_token, user_creds):
     r = requests.put(f"{API}/admin/users/{user_creds['id']}", json={"active": False}, headers=H(admin_token))
     assert r.status_code == 200
-    assert r.json()["active"] is False
+    assert r.json()["active"] == False
     # Re-enable
     r = requests.put(f"{API}/admin/users/{user_creds['id']}", json={"active": True, "role": "user"}, headers=H(admin_token))
     assert r.status_code == 200
@@ -393,7 +393,7 @@ def test_closings_run_and_undo_safe_period(admin_token):
     # Preview shows already_run False
     pv = requests.get(f"{API}/closings/preview", params={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
     assert pv.status_code == 200
-    assert pv.json()["already_run"] is False
+    assert pv.json()["already_run"] == False
 
     # Run closing
     r = requests.post(f"{API}/closings/run", json={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
@@ -411,7 +411,7 @@ def test_closings_run_and_undo_safe_period(admin_token):
 
     # Preview now shows already_run True
     pv2 = requests.get(f"{API}/closings/preview", params={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
-    assert pv2.json()["already_run"] is True
+    assert pv2.json()["already_run"] == True
 
     # Re-run blocked
     r2 = requests.post(f"{API}/closings/run", json={"period": CLOSING_TEST_PERIOD}, headers=H(admin_token))
@@ -423,7 +423,7 @@ def test_closings_run_and_undo_safe_period(admin_token):
     u = requests.delete(f"{API}/closings/{CLOSING_TEST_PERIOD}", headers=H(admin_token))
     assert u.status_code == 200, u.text
     udata = u.json()
-    assert udata["ok"] is True
+    assert udata["ok"] == True
     assert "deleted_entries" in udata
 
     # Undo of non-existent returns 404
